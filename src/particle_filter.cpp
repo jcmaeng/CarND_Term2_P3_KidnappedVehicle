@@ -19,7 +19,7 @@
 
 using namespace std;
 
-static int NUM_PARTICLES_MAX = 80;
+static int NUM_PARTICLES_MAX = 100;
 
 void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	// TODO: Set the number of particles. Initialize all particles to first position (based on estimates of 
@@ -33,6 +33,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
     normal_distribution<double> dist_y(y, std[1]);
     normal_distribution<double> dist_theta(theta, std[2]);
     
+    //intialising weights and particles
+    weights = vector<double>(num_particles);
 
     for (int i = 0; i < num_particles; i++) {
         double sample_x = dist_x(gen);
@@ -48,6 +50,8 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
         p.id = i;
 
         particles.push_back(p);
+
+        weights[i] = 1.0;
     }
 
     is_initialized = true;
@@ -86,7 +90,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
     for (int i = 0; i < observations.size(); i++) {
-        double dist_min = numeric_limits<double>::max() - 1.0;
+        double dist_min = numeric_limits<double>::max();
         LandmarkObs ob = observations[i];
         for (int j = 0; j < predicted.size(); j++) {
             LandmarkObs pr = predicted[j];
@@ -118,19 +122,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
         Particle p = particles[i];
 
         // choose landmarks within square area around particle
-        cout << "---------------------select obs--------------------" << endl;
+        // cout << "---------------------select obs--------------------" << endl;
         vector<LandmarkObs> selected_obs;
         for (int j = 0; j < lm_list.size(); j++) {
             Map::single_landmark_s lm = lm_list[j];
             if ((fabs(lm.x_f - p.x) < sensor_range) && (fabs(lm.y_f - p.y) < sensor_range)) {
                 selected_obs.push_back(LandmarkObs{lm.id_i, lm.x_f, lm.y_f});
-                cout << lm.id_i << ":" << lm.x_f << ":" << lm.y_f << endl;
+                // cout << lm.id_i << ":" << lm.x_f << ":" << lm.y_f << endl;
             }
         }
 
         // transform observed landmarks
-        cout << "--------------------transform----------------------" << endl;
-        cout << "# observation: " << observations.size() << endl;
+        // cout << "--------------------transform----------------------" << endl;
+        // cout << "# observation: " << observations.size() << endl;
         vector<LandmarkObs> transformed_obs;
         for (int k = 0; k < observations.size(); k++) {
             LandmarkObs ob = observations[k];
@@ -139,14 +143,14 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             tmp.x = ob.x * cos(p.theta) - ob.y * sin(p.theta) + p.x;
             tmp.y = ob.y * sin(p.theta) + ob.y * cos(p.theta) + p.y;
             tmp.id = k;
-            cout << tmp.id << ":" << tmp.x << ":" << tmp.y << endl;
+            // cout << tmp.id << ":" << tmp.x << ":" << tmp.y << endl;
             transformed_obs.push_back(tmp);
         }
 
         dataAssociation(selected_obs, transformed_obs);
 
         p.weight = 1.0;
-        cout << "# transform: " << transformed_obs.size() << endl;
+        // cout << "# transform: " << transformed_obs.size() << endl;
         for (int m = 1; m < transformed_obs.size(); m++) {
             LandmarkObs tob = transformed_obs[m];
             Map::single_landmark_s mlm = lm_list.at(tob.id-1);
