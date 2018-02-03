@@ -68,7 +68,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
     normal_distribution<double> dist_theta(0, std_pos[2]);
 
     for (int i = 0; i < particles.size(); i++) {
-        Particle p = particles[i];
+        Particle &p = particles[i];
         if (fabs(yaw_rate) < 1e-10) {  // to avoid division by zero
             p.x += velocity * delta_t * cos(p.theta);
             p.y += velocity * delta_t * sin(p.theta);
@@ -91,7 +91,7 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   implement this method and use it as a helper during the updateWeights phase.
     for (int i = 0; i < observations.size(); i++) {
         double dist_min = numeric_limits<double>::max();
-        LandmarkObs ob = observations[i];
+        LandmarkObs &ob = observations[i];
         for (int j = 0; j < predicted.size(); j++) {
             LandmarkObs pr = predicted[j];
             double distance = dist(ob.x, ob.y, pr.x, pr.y);
@@ -119,7 +119,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
     vector<Map::single_landmark_s> lm_list = map_landmarks.landmark_list;
 
     for (int i = 0; i < particles.size(); i++) {
-        Particle p = particles[i];
+        Particle &p = particles[i];
 
         // choose landmarks within square area around particle
         // cout << "---------------------select obs--------------------" << endl;
@@ -141,7 +141,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
             LandmarkObs tmp;
 
             tmp.x = ob.x * cos(p.theta) - ob.y * sin(p.theta) + p.x;
-            tmp.y = ob.y * sin(p.theta) + ob.y * cos(p.theta) + p.y;
+            tmp.y = ob.x * sin(p.theta) + ob.y * cos(p.theta) + p.y;
             tmp.id = k;
             // cout << tmp.id << ":" << tmp.x << ":" << tmp.y << endl;
             transformed_obs.push_back(tmp);
